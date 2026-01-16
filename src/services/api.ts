@@ -1,0 +1,86 @@
+import axios from "axios";
+
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || "/api",
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+export interface QRCodeInput {
+  name?: string;
+  destination_url: string;
+  utm_source?: string;
+  utm_medium?: string;
+  utm_campaign?: string;
+  utm_term?: string;
+  utm_content?: string;
+  dcm_impression_tag?: string;
+}
+
+export interface QRCode {
+  id: number;
+  slug: string;
+  name?: string;
+  destination_url: string;
+  utm_source?: string;
+  utm_medium?: string;
+  utm_campaign?: string;
+  utm_term?: string;
+  utm_content?: string;
+  dcm_impression_tag?: string;
+  created_at: string;
+  redirectUrl: string;
+  qrCodeImage?: string;
+  totalScans?: number;
+}
+
+export interface Stats {
+  totalScans: number;
+  uniqueScans: number;
+  dailySeries: Array<{ date: string; scans: number; unique_scans: number }>;
+  topCountries: Array<{ country: string; scans: number }>;
+  deviceBreakdown: Record<string, number>;
+  browserBreakdown: Record<string, number>;
+}
+
+export const qrCodeApi = {
+  create: async (data: QRCodeInput): Promise<QRCode> => {
+    const response = await api.post<QRCode>("/qrcodes", data);
+    return response.data;
+  },
+
+  getAll: async (): Promise<QRCode[]> => {
+    const response = await api.get<QRCode[]>("/qrcodes");
+    return response.data;
+  },
+
+  getById: async (id: number): Promise<QRCode> => {
+    const response = await api.get<QRCode>(`/qrcodes/${id}`);
+    return response.data;
+  },
+
+  update: async (id: number, data: Partial<QRCodeInput>): Promise<QRCode> => {
+    const response = await api.put<QRCode>(`/qrcodes/${id}`, data);
+    return response.data;
+  },
+
+  delete: async (id: number): Promise<void> => {
+    await api.delete(`/qrcodes/${id}`);
+  },
+
+  getStats: async (
+    id: number,
+    startDate?: string,
+    endDate?: string
+  ): Promise<Stats> => {
+    const params: Record<string, string> = {};
+    if (startDate) params.startDate = startDate;
+    if (endDate) params.endDate = endDate;
+
+    const response = await api.get<Stats>(`/qrcodes/${id}/stats`, { params });
+    return response.data;
+  },
+};
+
+export default api;

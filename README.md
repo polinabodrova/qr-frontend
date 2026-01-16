@@ -69,11 +69,12 @@ cd qr-frontend
 npm install
 ```
 
-3. **Set up environment variables**
-   Create a `.env` file in the root directory:
+3. **Set up environment variables (optional)**
+   By default the app uses `/api` and relies on the dev proxy / nginx config.
+   If you want to point directly to the backend, create a `.env` file in the root directory:
 
 ```env
-VITE_API_URL=http://localhost:3000
+VITE_API_URL=http://localhost:3000/api
 ```
 
 4. **Start development server**
@@ -99,7 +100,7 @@ The application will be available at `http://localhost:80`
 ```bash
 docker build -t qr-frontend .
 docker run -p 80:80 \
-  -e VITE_API_URL=http://your-backend-url \
+  -e VITE_API_URL=/api \
   qr-frontend
 ```
 
@@ -185,12 +186,12 @@ The frontend communicates with the backend API via the `api.ts` service:
 const API_URL = import.meta.env.VITE_API_URL
 
 // Example API calls
-GET /api/qrcodes           # Get all QR codes
-POST /api/qrcodes          # Create QR code
-GET /api/qrcodes/:id       # Get specific QR code
-PUT /api/qrcodes/:id       # Update QR code
-DELETE /api/qrcodes/:id    # Delete QR code
-GET /api/qrcodes/:id/stats # Get statistics
+GET /api/qrcodes            # Get all QR codes
+POST /api/qrcodes           # Create QR code
+GET /api/qrcodes/:id        # Get specific QR code
+PUT /api/qrcodes/:id        # Update QR code
+DELETE /api/qrcodes/:id     # Delete QR code
+GET /api/qrcodes/:id/stats  # Get statistics
 GET /api/qrcodes/:id/qrcode # Get QR code image
 ```
 

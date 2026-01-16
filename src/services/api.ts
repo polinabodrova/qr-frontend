@@ -46,27 +46,27 @@ export interface Stats {
 
 export const qrCodeApi = {
   create: async (data: QRCodeInput): Promise<QRCode> => {
-    const response = await api.post<QRCode>("/qrcodes", data);
+    const response = await api.post<QRCode>("/api/qrcodes", data);
     return response.data;
   },
 
   getAll: async (): Promise<QRCode[]> => {
-    const response = await api.get<QRCode[]>("/qrcodes");
+    const response = await api.get<QRCode[]>("/api/qrcodes");
     return response.data;
   },
 
   getById: async (id: number): Promise<QRCode> => {
-    const response = await api.get<QRCode>(`/qrcodes/${id}`);
+    const response = await api.get<QRCode>(`/api/qrcodes/${id}`);
     return response.data;
   },
 
   update: async (id: number, data: Partial<QRCodeInput>): Promise<QRCode> => {
-    const response = await api.put<QRCode>(`/qrcodes/${id}`, data);
+    const response = await api.put<QRCode>(`/api/qrcodes/${id}`, data);
     return response.data;
   },
 
   delete: async (id: number): Promise<void> => {
-    await api.delete(`/qrcodes/${id}`);
+    await api.delete(`/api/qrcodes/${id}`);
   },
 
   getStats: async (
@@ -78,7 +78,9 @@ export const qrCodeApi = {
     if (startDate) params.startDate = startDate;
     if (endDate) params.endDate = endDate;
 
-    const response = await api.get<Stats>(`/qrcodes/${id}/stats`, { params });
+    const response = await api.get<Stats>(`/api/qrcodes/${id}/stats`, {
+      params,
+    });
     return response.data;
   },
 };

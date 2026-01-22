@@ -6,12 +6,14 @@ import {
   type QRCode,
   type QRCodeInput,
   type Stats,
+  type ScanEvent,
 } from "@/services/api";
 
 export const useQRCodeStore = defineStore("qrCodes", () => {
   const qrCodes = ref<QRCode[]>([]);
   const currentQRCode = ref<QRCode | null>(null);
   const currentStats = ref<Stats | null>(null);
+  const recentScans = ref<ScanEvent[]>([]);
   const loading = ref(false);
   const error = ref<string | null>(null);
 
@@ -39,7 +41,7 @@ export const useQRCodeStore = defineStore("qrCodes", () => {
           .flatMap(([field, value]) =>
             Array.isArray(value)
               ? value.map((msg) => `${field}: ${msg}`)
-              : [`${field}: ${value}`]
+              : [`${field}: ${value}`],
           )
           .filter(Boolean);
         return parts.length ? parts.join("; ") : null;
@@ -51,7 +53,7 @@ export const useQRCodeStore = defineStore("qrCodes", () => {
   function formatAxiosError(
     err: unknown,
     fallback: string,
-    context?: string
+    context?: string,
   ): string {
     if (!axios.isAxiosError(err)) {
       return fallback;
@@ -117,7 +119,7 @@ export const useQRCodeStore = defineStore("qrCodes", () => {
       error.value = formatAxiosError(
         err,
         "Failed to create QR code",
-        "creating a QR code"
+        "creating a QR code",
       );
       return null;
     } finally {
@@ -200,10 +202,24 @@ export const useQRCodeStore = defineStore("qrCodes", () => {
     }
   }
 
+  async function fetchRecentScans(id: number, limit?: number) {
+    loading.value = true;
+    error.value = null;
+    try {
+      recentScans.value = await qrCodeApi.getRecentScans(id, limit);
+    } catch (err: unknown) {
+      logAxiosError("fetch recent scans", err, { id, limit });
+      error.value = formatAxiosError(err, "Failed to fetch recent scans");
+    } finally {
+      loading.value = false;
+    }
+  }
+
   return {
     qrCodes,
     currentQRCode,
     currentStats,
+    recentScans,
     loading,
     error,
     createQRCode,
@@ -212,5 +228,6 @@ export const useQRCodeStore = defineStore("qrCodes", () => {
     updateQRCode,
     deleteQRCode,
     fetchStats,
+    fetchRecentScans,
   };
 });

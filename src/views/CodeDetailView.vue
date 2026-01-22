@@ -149,6 +149,68 @@
                 :data="browserData"
               />
             </div>
+
+            <!-- Recent Scans -->
+            <div class="bg-white p-6 rounded-lg shadow">
+              <h3 class="text-lg font-semibold mb-4">Recent Scans</h3>
+              <div v-if="recentScans && recentScans.length > 0">
+                <div class="overflow-x-auto">
+                  <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                      <tr>
+                        <th
+                          class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        >
+                          Date & Time
+                        </th>
+                        <th
+                          class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        >
+                          Device
+                        </th>
+                        <th
+                          class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        >
+                          Browser
+                        </th>
+                        <th
+                          class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        >
+                          Referrer
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                      <tr v-for="scan in recentScans" :key="scan.id">
+                        <td
+                          class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                        >
+                          {{ formatScanDate(scan.scanned_at) }}
+                        </td>
+                        <td
+                          class="px-6 py-4 whitespace-nowrap text-sm text-gray-600"
+                        >
+                          {{ scan.device_type }}
+                        </td>
+                        <td
+                          class="px-6 py-4 whitespace-nowrap text-sm text-gray-600"
+                        >
+                          {{ scan.browser }}
+                        </td>
+                        <td
+                          class="px-6 py-4 text-sm text-gray-600 truncate max-w-xs"
+                        >
+                          {{ scan.referrer || "-" }}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div v-else class="text-gray-500 text-center py-4">
+                No scans recorded yet
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -226,6 +288,7 @@ const store = useQRCodeStore();
 
 const qrCode = computed(() => store.currentQRCode);
 const stats = computed(() => store.currentStats);
+const recentScans = computed(() => store.recentScans);
 const loading = computed(() => store.loading);
 
 const startDate = ref("");
@@ -300,6 +363,31 @@ async function loadStats() {
   await store.fetchStats(id, startDate.value, endDate.value);
 }
 
+function formatScanDate(dateString: string): string {
+  const date = new Date(dateString);
+  const now = new Date();
+  const isToday = date.toDateString() === now.toDateString();
+
+  const dateOptions: Intl.DateTimeFormatOptions = {
+    month: "short",
+    day: "numeric",
+    year: date.getFullYear() !== now.getFullYear() ? "numeric" : undefined,
+  };
+
+  const timeOptions: Intl.DateTimeFormatOptions = {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  };
+
+  const datePart = isToday
+    ? "Today"
+    : date.toLocaleDateString(undefined, dateOptions);
+  const timePart = date.toLocaleTimeString(undefined, timeOptions);
+
+  return `${datePart} ${timePart}`;
+}
+
 async function saveEdit() {
   const id = parseInt(route.params.id as string);
   saving.value = true;
@@ -321,7 +409,7 @@ async function saveEdit() {
 async function handleDelete() {
   if (
     confirm(
-      "Are you sure you want to delete this QR code? This action cannot be undone."
+      "Are you sure you want to delete this QR code? This action cannot be undone.",
     )
   ) {
     const id = parseInt(route.params.id as string);
@@ -340,6 +428,7 @@ onMounted(async () => {
   const id = parseInt(route.params.id as string);
   await store.fetchQRCode(id);
   await store.fetchStats(id);
+  await store.fetchRecentScans(id, 20);
 
   if (qrCode.value) {
     editForm.name = qrCode.value.name || "";

@@ -44,6 +44,14 @@ export interface Stats {
   browserBreakdown: Record<string, number>;
 }
 
+export interface ScanEvent {
+  id: number;
+  scanned_at: string;
+  device_type: string;
+  browser: string;
+  referrer?: string;
+}
+
 export const qrCodeApi = {
   create: async (data: QRCodeInput): Promise<QRCode> => {
     const response = await api.post<QRCode>("/api/qrcodes", data);
@@ -72,13 +80,23 @@ export const qrCodeApi = {
   getStats: async (
     id: number,
     startDate?: string,
-    endDate?: string
+    endDate?: string,
   ): Promise<Stats> => {
     const params: Record<string, string> = {};
     if (startDate) params.startDate = startDate;
     if (endDate) params.endDate = endDate;
 
     const response = await api.get<Stats>(`/api/qrcodes/${id}/stats`, {
+      params,
+    });
+    return response.data;
+  },
+
+  getRecentScans: async (id: number, limit?: number): Promise<ScanEvent[]> => {
+    const params: Record<string, string> = {};
+    if (limit) params.limit = limit.toString();
+
+    const response = await api.get<ScanEvent[]>(`/api/qrcodes/${id}/scans`, {
       params,
     });
     return response.data;

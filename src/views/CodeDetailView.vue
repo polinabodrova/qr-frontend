@@ -176,6 +176,16 @@
                         <th
                           class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                         >
+                          App
+                        </th>
+                        <th
+                          class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        >
+                          Domain
+                        </th>
+                        <th
+                          class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        >
                           Referrer
                         </th>
                       </tr>
@@ -196,6 +206,16 @@
                           class="px-6 py-4 whitespace-nowrap text-sm text-gray-600"
                         >
                           {{ scan.browser }}
+                        </td>
+                        <td
+                          class="px-6 py-4 whitespace-nowrap text-sm text-gray-600"
+                        >
+                          {{ scan.scan_app || "-" }}
+                        </td>
+                        <td
+                          class="px-6 py-4 whitespace-nowrap text-sm text-gray-600"
+                        >
+                          {{ scan.scan_domain || "-" }}
                         </td>
                         <td
                           class="px-6 py-4 text-sm text-gray-600 truncate max-w-xs"

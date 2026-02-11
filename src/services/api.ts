@@ -50,6 +50,8 @@ export interface ScanEvent {
   device_type: string;
   browser: string;
   referrer?: string;
+  scan_domain?: string;
+  scan_app?: string;
 }
 
 export const qrCodeApi = {

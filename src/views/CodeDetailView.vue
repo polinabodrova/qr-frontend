@@ -33,7 +33,7 @@
         </div>
         <div class="flex gap-3">
           <button
-            @click="showEditModal = true"
+            @click="openEditModal"
             class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200"
           >
             Edit
@@ -155,36 +155,36 @@
               <h3 class="text-lg font-semibold mb-4">Recent Scans</h3>
               <div v-if="recentScans && recentScans.length > 0">
                 <div class="overflow-x-auto">
-                  <table class="min-w-full divide-y divide-gray-200">
+                  <table class="min-w-max w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                       <tr>
                         <th
-                          class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap"
                         >
                           Date & Time
                         </th>
                         <th
-                          class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap"
                         >
                           Device
                         </th>
                         <th
-                          class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap"
                         >
                           Browser
                         </th>
                         <th
-                          class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap"
                         >
                           App
                         </th>
                         <th
-                          class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap"
                         >
                           Domain
                         </th>
                         <th
-                          class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap"
                         >
                           Referrer
                         </th>
@@ -218,7 +218,7 @@
                           {{ scan.scan_domain || "-" }}
                         </td>
                         <td
-                          class="px-6 py-4 text-sm text-gray-600 truncate max-w-xs"
+                          class="px-6 py-4 text-sm text-gray-600 max-w-xs truncate"
                         >
                           {{ scan.referrer || "-" }}
                         </td>
@@ -240,7 +240,7 @@
     <div
       v-if="showEditModal"
       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
-      @click="showEditModal = false"
+      @click="closeEditModal"
     >
       <div class="bg-white rounded-lg p-6 max-w-2xl w-full" @click.stop>
         <h2 class="text-2xl font-bold mb-4">Edit QR Code</h2>
@@ -271,6 +271,18 @@
           <DcmBuilder v-model="editForm.dcm_impression_tag" />
         </div>
 
+        <div
+          v-if="editStatusMessage"
+          :class="[
+            'mt-4 px-4 py-2 rounded-lg text-sm',
+            editStatusType === 'success'
+              ? 'bg-green-50 text-green-700'
+              : 'bg-red-50 text-red-700',
+          ]"
+        >
+          {{ editStatusMessage }}
+        </div>
+
         <div class="flex gap-4 mt-6">
           <button
             @click="saveEdit"
@@ -280,7 +292,7 @@
             {{ saving ? "Saving..." : "Save Changes" }}
           </button>
           <button
-            @click="showEditModal = false"
+            @click="closeEditModal"
             class="flex-1 bg-gray-100 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-200"
           >
             Cancel
@@ -316,12 +328,45 @@ const endDate = ref("");
 const showEditModal = ref(false);
 const isEditValid = ref(true);
 const saving = ref(false);
+const editStatusMessage = ref("");
+const editStatusType = ref<"success" | "error">("success");
 const editForm = reactive({
   name: "",
   destination_url: "",
   dcm_impression_tag: "",
 });
 const editUtmParams = ref<Record<string, string>>({});
+
+function closeEditModal() {
+  showEditModal.value = false;
+  editStatusMessage.value = "";
+}
+
+function openEditModal() {
+  if (qrCode.value) {
+    editForm.name = qrCode.value.name || "";
+    editForm.destination_url = qrCode.value.destination_url;
+    editForm.dcm_impression_tag = qrCode.value.dcm_impression_tag || "";
+    editUtmParams.value = {
+      ...(qrCode.value.utm_source
+        ? { utm_source: qrCode.value.utm_source }
+        : {}),
+      ...(qrCode.value.utm_medium
+        ? { utm_medium: qrCode.value.utm_medium }
+        : {}),
+      ...(qrCode.value.utm_campaign
+        ? { utm_campaign: qrCode.value.utm_campaign }
+        : {}),
+      ...(qrCode.value.utm_term ? { utm_term: qrCode.value.utm_term } : {}),
+      ...(qrCode.value.utm_content
+        ? { utm_content: qrCode.value.utm_content }
+        : {}),
+    };
+  }
+
+  editStatusMessage.value = "";
+  showEditModal.value = true;
+}
 
 const scanTimeData = computed(() => {
   if (!stats.value) return {};
@@ -410,9 +455,10 @@ function formatScanDate(dateString: string): string {
 
 async function saveEdit() {
   const id = parseInt(route.params.id as string);
+  editStatusMessage.value = "";
   saving.value = true;
 
-  await store.updateQRCode(id, {
+  const updated = await store.updateQRCode(id, {
     name: editForm.name || undefined,
     destination_url: editForm.destination_url,
     ...editUtmParams.value,
@@ -420,10 +466,22 @@ async function saveEdit() {
   });
 
   saving.value = false;
-  showEditModal.value = false;
+
+  if (!updated) {
+    editStatusType.value = "error";
+    editStatusMessage.value = store.error || "Failed to save changes";
+    return;
+  }
+
+  editStatusType.value = "success";
+  editStatusMessage.value = "Changes saved successfully.";
 
   // Reload QR code data
   await store.fetchQRCode(id);
+
+  setTimeout(() => {
+    closeEditModal();
+  }, 800);
 }
 
 async function handleDelete() {

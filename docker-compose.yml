@@ -5,7 +5,14 @@ services:
       dockerfile: Dockerfile
       args:
         - VITE_API_URL=${VITE_API_URL:-/api}
+    image: qr-frontend:latest
     container_name: qr-frontend
     ports:
       - "80:80"
     restart: unless-stopped
+    networks:
+      - qr-network
+
+networks:
+  qr-network:
+    external: true
